@@ -1,0 +1,1 @@
+"""Cliente da LLM (Ollama)."""

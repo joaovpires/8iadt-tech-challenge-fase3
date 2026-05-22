@@ -1,0 +1,52 @@
+[
+  {
+    "id": "P001",
+    "nome": "Paciente A",
+    "idade": 67,
+    "sexo": "M",
+    "comorbidades": ["hipertensão", "diabetes tipo 2", "DPOC"],
+    "alergias": ["penicilina"],
+    "medicacoes_uso": ["losartana 50mg", "metformina 850mg", "salbutamol inalatório"],
+    "exames_pendentes": [
+      {"exame": "Hemoglobina glicada", "solicitado_em": "2026-02-10"},
+      {"exame": "ECG", "solicitado_em": "2026-03-05"}
+    ],
+    "ultimos_exames": [
+      {"exame": "Creatinina", "valor": "1.4 mg/dL", "data": "2026-01-15"},
+      {"exame": "Glicemia jejum", "valor": "168 mg/dL", "data": "2026-01-15"}
+    ],
+    "historico_resumo": "Paciente em acompanhamento ambulatorial por HAS e DM2 mal controlados. Internado em 2025 por exacerbação de DPOC."
+  },
+  {
+    "id": "P002",
+    "nome": "Paciente B",
+    "idade": 34,
+    "sexo": "F",
+    "comorbidades": ["asma leve intermitente"],
+    "alergias": [],
+    "medicacoes_uso": ["salbutamol sob demanda"],
+    "exames_pendentes": [],
+    "ultimos_exames": [
+      {"exame": "Hemograma", "valor": "Normal", "data": "2026-04-02"}
+    ],
+    "historico_resumo": "Paciente hígida, acompanhamento de rotina. Asma controlada."
+  },
+  {
+    "id": "P003",
+    "nome": "Paciente C",
+    "idade": 52,
+    "sexo": "M",
+    "comorbidades": ["dislipidemia", "obesidade grau I"],
+    "alergias": ["dipirona"],
+    "medicacoes_uso": ["sinvastatina 20mg"],
+    "exames_pendentes": [
+      {"exame": "Perfil lipídico", "solicitado_em": "2026-03-20"},
+      {"exame": "Teste ergométrico", "solicitado_em": "2026-03-20"}
+    ],
+    "ultimos_exames": [
+      {"exame": "Colesterol total", "valor": "248 mg/dL", "data": "2025-09-10"},
+      {"exame": "PA", "valor": "138/88 mmHg", "data": "2026-03-20"}
+    ],
+    "historico_resumo": "Dislipidemia em tratamento. Refere dor torácica esporádica aos esforços moderados."
+  }
+]

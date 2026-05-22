@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Vector store local
+.chroma/
+
+# Logs
+logs/
+
+# Artefatos de fine-tuning (gerados no Colab)
+outputs/
+*.zip
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Helpers descartáveis
+_peek.py
