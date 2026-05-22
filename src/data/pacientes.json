@@ -1,7 +1,7 @@
 [
   {
     "id": "P001",
-    "nome": "Paciente A",
+    "nome": "Carlos Eduardo Almeida",
     "idade": 67,
     "sexo": "M",
     "comorbidades": ["hipertensão", "diabetes tipo 2", "DPOC"],
@@ -19,7 +19,7 @@
   },
   {
     "id": "P002",
-    "nome": "Paciente B",
+    "nome": "Mariana Souza Ribeiro",
     "idade": 34,
     "sexo": "F",
     "comorbidades": ["asma leve intermitente"],
@@ -33,7 +33,7 @@
   },
   {
     "id": "P003",
-    "nome": "Paciente C",
+    "nome": "Roberto Lima Pereira",
     "idade": 52,
     "sexo": "M",
     "comorbidades": ["dislipidemia", "obesidade grau I"],

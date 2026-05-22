@@ -12,7 +12,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "src" / "data"
 PROTOCOLS_DIR = DATA_DIR / "protocolos"
 PATIENTS_FILE = DATA_DIR / "pacientes.json"
-VECTORSTORE_DIR = ROOT_DIR / ".chroma"
+VECTORSTORE_DIR = ROOT_DIR / ".faiss_index"
 LOGS_DIR = ROOT_DIR / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
 
@@ -31,7 +31,6 @@ EMBEDDING_MODEL = os.getenv(
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
 )
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "3"))
-COLLECTION_NAME = "protocolos_medicos"
 
 # ───────────────────────── Segurança ─────────────────────────
 # Termos que disparam recusa imediata (nunca prescrever).

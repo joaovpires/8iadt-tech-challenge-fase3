@@ -1,24 +1,26 @@
 """
-Vector store baseado em ChromaDB para os protocolos médicos.
+Vector store baseado em FAISS para os protocolos médicos.
 
 Estratégia:
-- Indexa todos os `.md` de `src/data/protocolos/` em uma collection persistente.
+- Indexa todos os `.md` de `src/data/protocolos/` em um índice FAISS persistente.
 - Embeddings via `sentence-transformers` (modelo multilíngue leve).
-- Reindexação automática quando o número de arquivos mudar.
+- Reindexação automática quando a quantidade de chunks mudar.
+
+FAISS foi escolhido em vez de Chroma para evitar dependência de
+compilador C++ no Windows (chroma-hnswlib não tem wheel pré-compilada).
 """
 from __future__ import annotations
 
 from pathlib import Path
 from typing import List
 
-from langchain_chroma import Chroma
 from langchain_community.document_loaders import TextLoader
+from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import MarkdownTextSplitter
-from langchain_core.documents import Document
 
 from src.config import (
-    COLLECTION_NAME,
     EMBEDDING_MODEL,
     PROTOCOLS_DIR,
     RAG_TOP_K,
@@ -26,7 +28,9 @@ from src.config import (
 )
 
 _embeddings: HuggingFaceEmbeddings | None = None
-_vectorstore: Chroma | None = None
+_vectorstore: FAISS | None = None
+
+_INDEX_NAME = "protocolos"
 
 
 def _get_embeddings() -> HuggingFaceEmbeddings:
@@ -55,35 +59,46 @@ def _load_protocol_documents() -> List[Document]:
     return splitter.split_documents(docs)
 
 
-def get_vectorstore(force_rebuild: bool = False) -> Chroma:
+def _index_file() -> Path:
+    return VECTORSTORE_DIR / f"{_INDEX_NAME}.faiss"
+
+
+def get_vectorstore(force_rebuild: bool = False) -> FAISS:
     """Retorna a vector store, criando/atualizando se necessário."""
     global _vectorstore
 
+    if _vectorstore is not None and not force_rebuild:
+        return _vectorstore
+
     VECTORSTORE_DIR.mkdir(exist_ok=True)
     embeddings = _get_embeddings()
-
-    store = Chroma(
-        collection_name=COLLECTION_NAME,
-        embedding_function=embeddings,
-        persist_directory=str(VECTORSTORE_DIR),
-    )
-
-    existing_count = store._collection.count()  # noqa: SLF001
     chunks = _load_protocol_documents()
 
-    if force_rebuild or existing_count == 0:
-        if existing_count > 0:
-            store.delete_collection()
-            store = Chroma(
-                collection_name=COLLECTION_NAME,
-                embedding_function=embeddings,
-                persist_directory=str(VECTORSTORE_DIR),
+    # Tenta carregar índice persistido
+    if _index_file().exists() and not force_rebuild:
+        try:
+            store = FAISS.load_local(
+                str(VECTORSTORE_DIR),
+                embeddings,
+                index_name=_INDEX_NAME,
+                allow_dangerous_deserialization=True,
             )
-        if chunks:
-            store.add_documents(chunks)
+            # Se o nº de chunks mudou, força reindex
+            if store.index.ntotal == len(chunks):
+                _vectorstore = store
+                return _vectorstore
+        except Exception:  # noqa: BLE001
+            pass  # cai no rebuild abaixo
 
-    _vectorstore = store
-    return store
+    if not chunks:
+        raise RuntimeError(
+            f"Nenhum protocolo encontrado em {PROTOCOLS_DIR}. "
+            "Verifique se os arquivos .md estão no diretório."
+        )
+
+    _vectorstore = FAISS.from_documents(chunks, embeddings)
+    _vectorstore.save_local(str(VECTORSTORE_DIR), index_name=_INDEX_NAME)
+    return _vectorstore
 
 
 def search_protocols(query: str, k: int = RAG_TOP_K) -> List[Document]:
@@ -101,3 +116,9 @@ def format_context(docs: List[Document]) -> str:
         src = d.metadata.get("source", "desconhecido")
         blocks.append(f"[FONTE: {src}]\n{d.page_content.strip()}")
     return "\n\n---\n\n".join(blocks)
+
+
+def index_size() -> int:
+    """Retorna o número de vetores no índice (para diagnóstico)."""
+    store = get_vectorstore()
+    return store.index.ntotal if store.index is not None else 0

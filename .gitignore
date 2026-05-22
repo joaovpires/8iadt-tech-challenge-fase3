@@ -7,7 +7,7 @@ venv/
 .env
 
 # Vector store local
-.chroma/
+.faiss_index/
 
 # Logs
 logs/
