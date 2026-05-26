@@ -261,7 +261,8 @@ inteiro.
 
 #### Curva de Loss
 
-![Curva de Loss](<img width="888" height="389" alt="image" src="https://github.com/user-attachments/assets/c55a8c3e-b9e8-45e9-9f28-6453874b5725" />)
+<img width="888" height="389" alt="image" src="https://github.com/user-attachments/assets/690b6c5d-c909-49fb-93d0-10000dd93083" />
+
 
 | Métrica | Início (step 5) | Final (step 24) |
 |---|---|---|
