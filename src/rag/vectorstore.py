@@ -101,10 +101,122 @@ def get_vectorstore(force_rebuild: bool = False) -> FAISS:
     return _vectorstore
 
 
+_KEYWORD_PROTOCOL_MAP = {
+    # ── Sepse ────────────────────────────────────────────────────────────
+    "sepse": "sepse.md",
+    "séptico": "sepse.md",
+    "séptica": "sepse.md",
+    "septico": "sepse.md",
+    "septica": "sepse.md",
+    "qsofa": "sepse.md",
+    "lactato": "sepse.md",
+    "bundle": "sepse.md",
+    "noradrenalina": "sepse.md",
+    "choque séptico": "sepse.md",
+    "choque septico": "sepse.md",
+    "vasopressor": "sepse.md",
+    "hemocultura": "sepse.md",
+    # sintomas vitais clássicos de sepse (usados pela triagem)
+    "hipotensão": "sepse.md",
+    "hipotensao": "sepse.md",
+    "taquicardia": "sepse.md",
+    # ── AVE / AVC ─────────────────────────────────────────────────────────
+    "ave ": "ave_isquemico.md",
+    "avc ": "ave_isquemico.md",
+    " ave": "ave_isquemico.md",
+    " avc": "ave_isquemico.md",
+    "isquêmico": "ave_isquemico.md",
+    "isquemico": "ave_isquemico.md",
+    "acidente vascular": "ave_isquemico.md",
+    "nihss": "ave_isquemico.md",
+    "trombólise": "ave_isquemico.md",
+    "trombolise": "ave_isquemico.md",
+    "rt-pa": "ave_isquemico.md",
+    "fast ": "ave_isquemico.md",
+    "afasia": "ave_isquemico.md",
+    "paralisia facial": "ave_isquemico.md",
+    "déficit neurológico": "ave_isquemico.md",
+    "deficit neurologico": "ave_isquemico.md",
+    # ── Cetoacidose ───────────────────────────────────────────────────────
+    "cetoacidose": "cetoacidose.md",
+    "cad": "cetoacidose.md",
+    "insulina": "cetoacidose.md",
+    "cetonemia": "cetoacidose.md",
+    "cetonúria": "cetoacidose.md",
+    "cetonuria": "cetoacidose.md",
+    "glicemia alta": "cetoacidose.md",
+    "hiperglicemia": "cetoacidose.md",
+    "diabético": "cetoacidose.md",
+    "diabetico": "cetoacidose.md",
+    "diabetes descompensado": "cetoacidose.md",
+    "bicarbonato baixo": "cetoacidose.md",
+    # ── Dor Torácica ──────────────────────────────────────────────────────
+    "dor torácica": "dor_toracica.md",
+    "dor toracica": "dor_toracica.md",
+    "troponina": "dor_toracica.md",
+    "ecg": "dor_toracica.md",
+    "infarto": "dor_toracica.md",
+    "sca": "dor_toracica.md",
+    "angina": "dor_toracica.md",
+    "supra de st": "dor_toracica.md",
+    "supradesnivelamento": "dor_toracica.md",
+    "dissecção aórtica": "dor_toracica.md",
+    "disseccao aortica": "dor_toracica.md",
+    "tromboembolismo": "dor_toracica.md",
+    "tep": "dor_toracica.md",
+    # ── Crise Hipertensiva ────────────────────────────────────────────────
+    "hipertensiva": "crise_hipertensiva.md",
+    "hipertensão": "crise_hipertensiva.md",
+    "hipertensao": "crise_hipertensiva.md",
+    "pressão alta": "crise_hipertensiva.md",
+    "pressao alta": "crise_hipertensiva.md",
+    "pa elevada": "crise_hipertensiva.md",
+    "encefalopatia hipertensiva": "crise_hipertensiva.md",
+    # ── Antibioticoterapia ────────────────────────────────────────────────
+    "antibiótico": "antibioticoterapia.md",
+    "antibiotico": "antibioticoterapia.md",
+    "antimicrobiano": "antibioticoterapia.md",
+    "pneumonia": "antibioticoterapia.md",
+    "infecção urinária": "antibioticoterapia.md",
+    "infeccao urinaria": "antibioticoterapia.md",
+    "penicilina": "antibioticoterapia.md",
+    "ceftriaxona": "antibioticoterapia.md",
+    "vancomicina": "antibioticoterapia.md",
+    "piperacilina": "antibioticoterapia.md",
+    "resistência bacteriana": "antibioticoterapia.md",
+    "desescalonamento": "antibioticoterapia.md",
+    # ── Prevenção / Exames ────────────────────────────────────────────────
+    "preventivo": "prevencao_exames.md",
+    "colonoscopia": "prevencao_exames.md",
+    "rastreamento": "prevencao_exames.md",
+    "exame de rotina": "prevencao_exames.md",
+    "mamografia": "prevencao_exames.md",
+    "pap": "prevencao_exames.md",
+    "preventiva": "prevencao_exames.md",
+}
+
+
 def search_protocols(query: str, k: int = RAG_TOP_K) -> List[Document]:
-    """Busca semântica nos protocolos. Retorna chunks ordenados por relevância."""
+    """Busca semântica nos protocolos com boost por palavras-chave."""
     store = get_vectorstore()
-    return store.similarity_search(query, k=k)
+    docs = store.similarity_search(query, k=k)
+
+    # Garante inclusão do protocolo correto quando palavra-chave é detectada
+    q_lower = query.lower()
+    forced_sources = {
+        proto for kw, proto in _KEYWORD_PROTOCOL_MAP.items() if kw in q_lower
+    }
+    existing_sources = {d.metadata.get("source") for d in docs}
+    missing = forced_sources - existing_sources
+
+    if missing:
+        all_chunks = _load_protocol_documents()
+        for src in missing:
+            candidates = [c for c in all_chunks if c.metadata.get("source") == src]
+            if candidates:
+                docs = [candidates[0]] + docs  # insere na frente (maior prioridade)
+
+    return docs
 
 
 def format_context(docs: List[Document]) -> str:

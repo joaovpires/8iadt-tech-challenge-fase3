@@ -39,10 +39,12 @@ RED_FLAGS = [
     "perda de consciência", "perda de consciencia", "convulsão", "convulsao",
     "sangramento", "hemorragia", "rebaixamento", "déficit neurológico",
     "deficit neurologico", "paralisia", "anafilaxia", "trauma grave",
+    "hipotensão", "hipotensao", "taquicardia", "sepse", "choque",
+    "infecção grave", "infeccao grave",
 ]
 YELLOW_FLAGS = [
     "febre alta", "vômito persistente", "vomito persistente", "dor intensa",
-    "tontura", "desidratação", "desidratacao",
+    "tontura", "desidratação", "desidratacao", "febre",
 ]
 
 
@@ -88,10 +90,12 @@ def node_check_pending_exams(state: TriageState) -> TriageState:
 
 def node_consult_assistant(state: TriageState) -> TriageState:
     pergunta = (
-        f"Triagem clínica.\n"
-        f"Sintomas relatados: {state['sintomas']}\n"
-        f"Urgência classificada: {state.get('urgencia')}.\n"
-        f"Sugira conduta inicial baseada nos protocolos disponíveis."
+        f"RESPONDA SOMENTE EM PORTUGUÊS DO BRASIL.\n"
+        f"Triagem clínica — conduta inicial.\n"
+        f"Sintomas: {state['sintomas']}\n"
+        f"Urgência: {state.get('urgencia')}.\n"
+        f"Liste em tópicos numerados a conduta inicial baseada nos protocolos disponíveis. "
+        f"Seja objetivo e direto. Não repita informações."
     )
     resp = ask(pergunta, patient_id=state.get("paciente_id"))
     return {

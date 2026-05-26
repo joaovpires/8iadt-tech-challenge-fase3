@@ -29,6 +29,7 @@ REGRAS INEGOCIÁVEIS:
 3. Use APENAS as informações dos PROTOCOLOS e do CONTEXTO DO PACIENTE fornecidos.
 4. Se a informação não estiver nos protocolos, diga claramente que não há base no material disponível.
 5. Responda em português do Brasil, com linguagem clara e objetiva.
+6. Se o paciente tiver ALERGIA documentada a algum antibiótico, NUNCA o indique.
 
 Formato da resposta:
 - **Conduta sugerida** (passos numerados)
@@ -44,8 +45,7 @@ USER_TEMPLATE = """### CONTEXTO DO PACIENTE
 {protocols_context}
 
 ### PERGUNTA DO MÉDICO
-{question}
-"""
+{question}"""
 
 
 @dataclass
@@ -70,6 +70,13 @@ def build_chain():
     return prompt | get_llm() | StrOutputParser()
 
 
+_ANTIBIOTIC_KEYWORDS = {
+    "antibiótico", "antibiotico", "antimicrobiano", "penicilina", "amoxicilina",
+    "ceftriaxona", "azitromicina", "vancomicina", "piperacilina", "ciprofloxacino",
+    "pneumonia", "infecção", "infeccao", "itu", "sepse",
+}
+
+
 def ask(question: str, patient_id: Optional[str] = None) -> AssistantResponse:
     """Pipeline completo de uma pergunta ao assistente."""
     # 1. RAG nos protocolos
@@ -80,6 +87,17 @@ def ask(question: str, patient_id: Optional[str] = None) -> AssistantResponse:
     # 2. Contexto do paciente (estruturado)
     patient = get_patient(patient_id) if patient_id else None
     patient_context = format_patient_context(patient) if patient else "(Sem paciente selecionado.)"
+
+    # 2b. Injeta alerta de alergia no bloco de contexto do paciente (não na pergunta)
+    if patient:
+        alergias = patient.get("alergias", [])
+        q_lower = question.lower()
+        if alergias and any(kw in q_lower for kw in _ANTIBIOTIC_KEYWORDS):
+            alergia_str = ", ".join(alergias).upper()
+            patient_context = (
+                f"⚠️ ALERTA DE ALERGIA: ESTE PACIENTE TEM ALERGIA DOCUMENTADA A {alergia_str}. "
+                f"NUNCA indique {alergia_str} nem derivados!\n\n{patient_context}"
+            )
 
     # 3. Invocação
     chain = build_chain()

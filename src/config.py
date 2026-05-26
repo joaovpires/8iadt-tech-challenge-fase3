@@ -30,7 +30,13 @@ EMBEDDING_MODEL = os.getenv(
     "EMBEDDING_MODEL",
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
 )
-RAG_TOP_K = int(os.getenv("RAG_TOP_K", "3"))
+RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
+
+# ───────────────────────── Modelo local (fine-tuning) ─────────────────────────
+# Adapter LoRA gerado pelo 03_finetuning_local.ipynb.
+# Ativar com: USE_LOCAL_MODEL=true streamlit run app.py
+LOCAL_ADAPTER_DIR = ROOT_DIR / "outputs" / "tinyllama-medico-local"
+USE_LOCAL_MODEL = os.getenv("USE_LOCAL_MODEL", "false").lower() == "true"
 
 # ───────────────────────── Segurança ─────────────────────────
 # Termos que disparam recusa imediata (nunca prescrever).

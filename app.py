@@ -6,13 +6,16 @@ Como rodar (com Ollama já instalado e `ollama pull tinyllama` feito):
 """
 from __future__ import annotations
 
+import os
 from datetime import datetime
+from pathlib import Path
 
 import streamlit as st
 
 from src.chains.medical_chain import ask
+from src.config import LOCAL_ADAPTER_DIR
 from src.graphs.triage_graph import run_triage
-from src.llm.ollama_client import ping
+from src.llm.ollama_client import clear_llm_cache, ping
 from src.rag.patient_db import get_patient, list_patients, overdue_exams
 from src.rag.vectorstore import get_vectorstore, index_size
 from src.security.audit_logger import read_recent
@@ -194,6 +197,31 @@ if not ok:
         "2. Execute `ollama pull tinyllama`\n"
         "3. Verifique se o serviço está em execução."
     )
+
+# ── Toggle: Modelo fine-tunado local ──────────────────────────────
+_adapter_exists = (LOCAL_ADAPTER_DIR / "adapter_config.json").exists()
+if _adapter_exists:
+    _use_local_prev = st.session_state.get("use_local_model", False)
+    _use_local = st.sidebar.toggle(
+        "🔬 Modelo fine-tunado (local)",
+        value=_use_local_prev,
+        help=(
+            "Usa o adapter LoRA treinado em 03_finetuning_local.ipynb.\n"
+            "⚠️ Carregamento inicial lento (~1-2 min). Respostas em ~30-90s."
+        ),
+    )
+    if _use_local != _use_local_prev:
+        st.session_state["use_local_model"] = _use_local
+        os.environ["USE_LOCAL_MODEL"] = "true" if _use_local else "false"
+        clear_llm_cache()
+        st.rerun()
+    if _use_local:
+        st.sidebar.markdown(
+            '<span class="badge badge-blue">🔬 LoRA local ativo</span>',
+            unsafe_allow_html=True,
+        )
+else:
+    st.sidebar.caption("_Fine-tuning local não disponível._  \n_Execute `03_finetuning_local.ipynb` para ativar._")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 👥 Selecione um paciente")
